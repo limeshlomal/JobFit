@@ -15,16 +15,22 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Job IDs and CV ID required' });
     }
 
-    // Check free tier limit
+    // Check free tier limit — 5 applications per calendar day
     const usedResult = await pool.query(
-      'SELECT COUNT(*) FROM applications WHERE user_id = $1 AND DATE_TRUNC(\'month\', created_at) = DATE_TRUNC(\'month\', CURRENT_DATE)',
+      'SELECT COUNT(*) FROM applications WHERE user_id = $1 AND created_at::date = CURRENT_DATE',
       [userId]
     );
 
     const used = parseInt(usedResult.rows[0].count);
     if (used >= 5) {
-      return res.status(402).json({ 
-        error: 'Free tier limit reached. Upgrade to premium for unlimited applications.' 
+      return res.status(402).json({
+        error: 'Daily free tier limit reached (5 applications/day). Upgrade to premium for unlimited applications, or try again tomorrow.'
+      });
+    }
+
+    if (used + jobIds.length > 5) {
+      return res.status(402).json({
+        error: `You can only submit ${5 - used} more application(s) today on the free tier.`
       });
     }
 

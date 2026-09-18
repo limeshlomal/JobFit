@@ -25,12 +25,14 @@ const authRoutes = require('./routes/auth');
 const cvRoutes = require('./routes/cvs');
 const jobRoutes = require('./routes/jobs');
 const applicationRoutes = require('./routes/applications');
+const tailoringRoutes = require('./routes/tailoring');
 
 // Use routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/cvs', cvRoutes);
 app.use('/api/v1/jobs', jobRoutes);
 app.use('/api/v1/applications', applicationRoutes);
+app.use('/api/v1/tailoring', tailoringRoutes);
 
 // 404 handler
 app.use((req, res) => {

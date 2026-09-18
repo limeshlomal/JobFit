@@ -32,24 +32,30 @@ router.post('/register', async (req, res) => {
     // Create user
     const userId = uuidv4();
     const result = await pool.query(
-      `INSERT INTO users (id, email, password_hash, first_name, last_name) 
-       VALUES ($1, $2, $3, $4, $5) 
+      `INSERT INTO users (id, email, password_hash, first_name, last_name)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING id, email, first_name, last_name, subscription_type`,
       [userId, email, hashedPassword, firstName, lastName]
     );
 
-    const user = result.rows[0];
+    const row = result.rows[0];
 
     // Generate JWT
     const accessToken = jwt.sign(
-      { userId: user.id, email: user.email },
+      { userId: row.id, email: row.email },
       process.env.JWT_SECRET,
       { expiresIn: '15m' }
     );
 
     res.status(201).json({
       message: 'User registered successfully',
-      user,
+      user: {
+        id: row.id,
+        email: row.email,
+        firstName: row.first_name,
+        lastName: row.last_name,
+        subscriptionType: row.subscription_type,
+      },
       accessToken,
     });
 
@@ -71,7 +77,7 @@ router.post('/login', async (req, res) => {
 
     // Find user
     const result = await pool.query(
-      'SELECT id, password_hash, email, first_name, last_name FROM users WHERE email = $1',
+      'SELECT id, password_hash, email, first_name, last_name, subscription_type FROM users WHERE email = $1',
       [email]
     );
 
@@ -101,6 +107,7 @@ router.post('/login', async (req, res) => {
         email: user.email,
         firstName: user.first_name,
         lastName: user.last_name,
+        subscriptionType: user.subscription_type,
       },
       accessToken,
     });
